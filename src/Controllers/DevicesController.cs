@@ -61,6 +61,15 @@ namespace EDAPI.Controllers
 
 		private IEnumerable<Device> FilterDevices(SearchRequest searchRequest)
 		{
+			int skip = 0;
+			int top = 100;
+
+			if (searchRequest.Skip > 0)
+				skip = searchRequest.Skip;
+
+			if (searchRequest.Top > 0)
+				top = searchRequest.Top;
+
 			var filteredDevices = new List<Device>();
 			var devices = _devicesRepository.GetDevices();
 			if (searchRequest.ContentIds != null && searchRequest.ContentIds.Count > 0)
@@ -71,7 +80,7 @@ namespace EDAPI.Controllers
 			else
 				filteredDevices = _mapper.Map<IEnumerable<Device>>(devices).ToList();
 
-			return filteredDevices.Skip(searchRequest.Skip).Take(searchRequest.Top);
+			return filteredDevices.Skip(skip).Take(top);
 		}
 
 		private void AddFieldToResult(int contentId, HashSet<string> fields, string fieldName, string fieldValue, Dictionary<int, Content> returnValue)
