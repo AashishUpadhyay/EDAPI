@@ -49,11 +49,11 @@ namespace EDAPI.Controllers
 			if ((searchRequest.Fields != null && searchRequest.Fields.Count > 0))
 				fields = searchRequest.Fields.ToHashSet();
 
-			var returnValue = new Dictionary<int, Content>();
+			var returnValue = new Dictionary<string, Content>();
 			foreach (var pfd in filteredDevices)
 			{
-				AddFieldToResult(pfd.Id, fields, nameof(pfd.DeviceName), pfd.DeviceName, returnValue);
-				AddFieldToResult(pfd.Id, fields, nameof(pfd.Make), pfd.DeviceName, returnValue);
+				AddFieldToResult(pfd.Id.ToString(), fields, nameof(pfd.DeviceName), pfd.DeviceName, "Text" ,returnValue);
+				AddFieldToResult(pfd.Id.ToString(), fields, nameof(pfd.Make), pfd.DeviceName, "Text", returnValue);
 			}
 
 			return Ok(returnValue.Values);
@@ -75,7 +75,7 @@ namespace EDAPI.Controllers
 			if (searchRequest.ContentIds != null && searchRequest.ContentIds.Count > 0)
 			{
 				var contentIds = searchRequest.ContentIds.ToHashSet();
-				filteredDevices = _mapper.Map<IEnumerable<Device>>(devices.Where(u => contentIds.Contains(u.Id))).ToList();
+				filteredDevices = _mapper.Map<IEnumerable<Device>>(devices.Where(u => contentIds.Contains(u.Id.ToString()))).ToList();
 			}
 			else
 				filteredDevices = _mapper.Map<IEnumerable<Device>>(devices).ToList();
@@ -83,7 +83,7 @@ namespace EDAPI.Controllers
 			return filteredDevices.Skip(skip).Take(top);
 		}
 
-		private void AddFieldToResult(int contentId, HashSet<string> fields, string fieldName, string fieldValue, Dictionary<int, Content> returnValue)
+		private void AddFieldToResult(string contentId, HashSet<string> fields, string fieldName, string fieldValue, string fieldType, Dictionary<string, Content> returnValue)
 		{
 			if (fields != null)
 			{
@@ -93,10 +93,15 @@ namespace EDAPI.Controllers
 						returnValue.Add(contentId, new Content()
 						{
 							ContentId = contentId,
-							Fields = new Dictionary<string, string>()
+							Fields = new List<ContentField>()
 						});
 
-					returnValue[contentId].Fields.Add(fieldName, fieldValue);
+					returnValue[contentId].Fields.Add(new ContentField()
+					{
+						FieldName = fieldName,
+						FieldValue = fieldValue,
+						FieldType = fieldType
+					});
 				}
 			}
 			else
@@ -105,10 +110,15 @@ namespace EDAPI.Controllers
 					returnValue.Add(contentId, new Content()
 					{
 						ContentId = contentId,
-						Fields = new Dictionary<string, string>()
+						Fields = new List<ContentField>()
 					});
 
-				returnValue[contentId].Fields.Add(fieldName, fieldValue);
+				returnValue[contentId].Fields.Add(new ContentField()
+				{
+					FieldName = fieldName,
+					FieldValue = fieldValue,
+					FieldType = fieldType
+				});
 			}
 		}
 	}
@@ -118,13 +128,20 @@ namespace EDAPI.Controllers
 		public int Skip { get; set; }
 		public int Top { get; set; }
 		public IList<string> Fields { get; set; }
-		public IList<int> ContentIds { get; set; }
+		public IList<string> ContentIds { get; set; }
 	}
 
 	public class Content
 	{
-		public int ContentId { get; set; }
+		public string ContentId { get; set; }
 
-		public IDictionary<string, string> Fields { get; set; }
+		public IList<ContentField> Fields { get; set; }
+	}
+
+	public class ContentField
+	{
+		public string FieldName { get; set; }
+		public string FieldType { get; set; }
+		public object FieldValue { get; set; }
 	}
 }
