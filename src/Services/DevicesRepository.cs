@@ -25,5 +25,10 @@ namespace EDAPI.Services
 		{
 			return _deviceContext.Devices;
 		}
+
+		public bool Save()
+		{
+			return (_deviceContext.SaveChanges() >= 0);
+		}
 	}
 }

@@ -28,7 +28,7 @@ namespace EDAPI.Controllers
 		public IActionResult GetDevices()
 		{
 			var devices = _devicesRepository.GetDevices();
-			return Ok(_mapper.Map<IEnumerable<Device>>(_devicesRepository.GetDevices()));
+			return Ok(_mapper.Map<IEnumerable<Models.Device>>(_devicesRepository.GetDevices()));
 		}
 
 		[HttpGet("{id}")]
@@ -37,7 +37,7 @@ namespace EDAPI.Controllers
 			var device = _devicesRepository.GetDevice(id);
 			if (device == null)
 				return NotFound();
-			return Ok(_mapper.Map<Device>(device));
+			return Ok(_mapper.Map<Models.Device>(device));
 		}
 
 		[HttpPost]
@@ -52,14 +52,48 @@ namespace EDAPI.Controllers
 			var returnValue = new Dictionary<string, Content>();
 			foreach (var pfd in filteredDevices)
 			{
-				AddFieldToResult(pfd.Id.ToString(), fields, nameof(pfd.DeviceName), pfd.DeviceName, "Text" ,returnValue);
+				AddFieldToResult(pfd.Id.ToString(), fields, nameof(pfd.DeviceName), pfd.DeviceName, "Text", returnValue);
 				AddFieldToResult(pfd.Id.ToString(), fields, nameof(pfd.Make), pfd.DeviceName, "Text", returnValue);
 			}
 
 			return Ok(returnValue.Values);
 		}
 
-		private IEnumerable<Device> FilterDevices(SearchRequest searchRequest)
+		[HttpPost]
+		public IActionResult Post(Content content)
+		{
+			if (!int.TryParse(content.ContentId, out int deviceId))
+				throw new ArgumentException("ContentId is not a valid integer!");
+
+			if (content == null)
+				throw new ArgumentException("Invalid Content!");
+
+			if (content.Fields == null || content.Fields.Count() == 0)
+				throw new ArgumentException("No fields to update!");
+
+			var device = _devicesRepository.GetDevice(deviceId);
+			if (device == null)
+				return NotFound();
+
+			foreach (var pfd in content.Fields)
+			{
+				UpdateFieldInEntity(device, pfd);
+			}
+
+			_devicesRepository.Save();
+			return Ok();
+		}
+
+		private void UpdateFieldInEntity(Entities.Device device, ContentField pfd)
+		{
+			if (pfd.FieldName == nameof(device.DeviceName))
+				device.DeviceName = pfd.FieldValue.ToString();
+
+			if (pfd.FieldName == nameof(device.Make))
+				device.Make = pfd.FieldValue.ToString();
+		}
+
+		private IEnumerable<Models.Device> FilterDevices(SearchRequest searchRequest)
 		{
 			int skip = 0;
 			int top = 100;
@@ -70,15 +104,15 @@ namespace EDAPI.Controllers
 			if (searchRequest.Top > 0)
 				top = searchRequest.Top;
 
-			var filteredDevices = new List<Device>();
+			var filteredDevices = new List<Models.Device>();
 			var devices = _devicesRepository.GetDevices();
 			if (searchRequest.ContentIds != null && searchRequest.ContentIds.Count > 0)
 			{
 				var contentIds = searchRequest.ContentIds.ToHashSet();
-				filteredDevices = _mapper.Map<IEnumerable<Device>>(devices.Where(u => contentIds.Contains(u.Id.ToString()))).ToList();
+				filteredDevices = _mapper.Map<IEnumerable<Models.Device>>(devices.Where(u => contentIds.Contains(u.Id.ToString()))).ToList();
 			}
 			else
-				filteredDevices = _mapper.Map<IEnumerable<Device>>(devices).ToList();
+				filteredDevices = _mapper.Map<IEnumerable<Models.Device>>(devices).ToList();
 
 			return filteredDevices.Skip(skip).Take(top);
 		}

@@ -11,5 +11,7 @@ namespace EDAPI.Services
 		IQueryable<Device> GetDevices();
 
 		Device GetDevice(int deviceId);
+
+		bool Save();
 	}
 }
