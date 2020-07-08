@@ -53,7 +53,7 @@ namespace EDAPI.Controllers
 			foreach (var pfd in filteredDevices)
 			{
 				AddFieldToResult(pfd.Id.ToString(), fields, nameof(pfd.DeviceName), pfd.DeviceName, "Text", returnValue);
-				AddFieldToResult(pfd.Id.ToString(), fields, nameof(pfd.Make), pfd.DeviceName, "Text", returnValue);
+				AddFieldToResult(pfd.Id.ToString(), fields, nameof(pfd.Make), pfd.Make, "Text", returnValue);
 			}
 
 			return Ok(returnValue.Values);
